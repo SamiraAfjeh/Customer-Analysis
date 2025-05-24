@@ -16,7 +16,7 @@ WHERE TABLE_NAME = @TableName
 SET @SQL = 'SELECT ' + @SQL + ' FROM [' + @SchemaName + '].[' + @TableName + ']';
 EXEC sp_executesql @SQL;
 
---2.Finding duplicate records based on First_Name and Last_Name.
+--Finding duplicate records based on First_Name and Last_Name.
 WITH duplicate_cte AS (
 SELECT *,
 ROW_NUMBER () OVER (PARTITION BY First_Name,Last_Name ORDER BY  Customer_ID)AS row_num
@@ -24,10 +24,18 @@ FROM customers1)
 SELECT*FROM duplicate_cte
 WHERE row_num>1;
 
-SELECT email FROM customers1
-WHERE email NOT REGEXP '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$';
+-- This code filters out emails that do not follow a basic structure like a@b.com.
+SELECT Email
+FROM customers1
+WHERE Email IS NOT NULL
+  AND (
+        Email NOT LIKE '%@%.%' OR
+        CHARINDEX(' ', Email) > 0 OR
+        Email LIKE '%..%' OR
+        Email LIKE '%@%@%'
+      );
 
-SELECT phone FROM customers1;
+
 
 SELECT phone,
 REGEXP_REPLACE(phone,'^(\\+1|001)-?','')
