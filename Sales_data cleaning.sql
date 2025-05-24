@@ -37,43 +37,52 @@ WHERE Email IS NOT NULL
 
 
 
-SELECT phone,
-REGEXP_REPLACE(phone,'^(\\+1|001)-?','')
-FROM customers1;
+CREATE PROCEDURE usp_Clean_Customers1_Data
+AS
+BEGIN
+    SET NOCOUNT ON;
 
-UPDATE customers1 
-SET phone=regexp_replace(phone,'^(\\+1|001)-?','')
-WHERE phone REGEXP '^(\\+1|001)';
+    PRINT '----- Duplicate Records by First and Last Name -----';
+    WITH duplicate_cte AS (
+        SELECT *,
+               ROW_NUMBER() OVER (PARTITION BY FirstName, LastName ORDER BY CustomerID) AS row_num
+        FROM customers1
+    )
+    SELECT * 
+    FROM duplicate_cte
+    WHERE row_num > 1;
 
-ALTER TABLE customers1 ADD COLUMN Extension varchar(20);
+    PRINT '----- Invalid Email Addresses -----';
+    SELECT Email, CustomerID
+    FROM customers1
+    WHERE Email IS NOT NULL
+      AND (
+            Email NOT LIKE '%@%.%' OR
+            CHARINDEX(' ', Email) > 0 OR
+            Email LIKE '%..%' OR
+            Email LIKE '%@%@%' OR
+            LEN(Email) < 5
+          );
+
+    PRINT '----- Invalid Phone Numbers (non-numeric or wrong length) -----';
+    SELECT Phone, CustomerID
+    FROM customers1
+    WHERE Phone IS NOT NULL
+      AND (
+            LEN(Phone) <> 10 OR
+            Phone LIKE '%[^0-9]%'  -- contains non-numeric characters
+          );
+
+    PRINT '----- Data Check Completed. -----';
+END;
+
+EXEC usp_Clean_Customers1_Data;
 
 
-UPDATE  customers1
-SET 
-  extension = SUBSTRING_INDEX(phone, 'x', -1),
-  phone = SUBSTRING_INDEX(phone, 'x', 1)
-WHERE LOWER(phone) LIKE '%x%';
-
-SELECT phone,
-REGEXP_REPLACE(phone ,'[^0-9]','')
-FROM customers1;
 
 
-SELECT phone,
-CONCAT(
-LEFT(phone,3),'-',
-MID(phone,4,3),'-',
-right(phone,4))
-FROM customers1;
 
 
-UPDATE customers1
-SET phone = CONCAT(
-    LEFT(REGEXP_REPLACE(phone, '[^0-9]', ''), 3), '-',
-    MID(REGEXP_REPLACE(phone, '[^0-9]', ''), 4, 3), '-',
-    RIGHT(REGEXP_REPLACE(phone, '[^0-9]', ''), 4)
-)
-WHERE LENGTH(REGEXP_REPLACE(phone, '[^0-9]', '')) = 10;
 
 
 
