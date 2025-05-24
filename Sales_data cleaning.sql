@@ -1,17 +1,22 @@
 
+📊 Dynamic SQL Query to Count NULLs in All Columns of customers1 Table
+  
+DECLARE @TableName NVARCHAR(128) = 'customers1';
+DECLARE @SchemaName NVARCHAR(128) = 'dbo';
+DECLARE @SQL NVARCHAR(MAX) = '';
 
-SELECT 
-SUM(CASE WHEN Customer_ID IS NULL THEN 1 ELSE 0 END )AS missing_Customer_ID,
-SUM(CASE WHEN First_Name IS NULL THEN 1 ELSE 0 END )AS missing_First_Name,
-SUM(CASE WHEN Last_Name IS NULL THEN 1 ELSE 0 END )AS missing_Last_Name,
-SUM(CASE WHEN Email IS NULL THEN 1 ELSE 0 END )AS missing_Email,
-SUM(CASE WHEN Phone IS NULL THEN 1 ELSE 0 END )AS missing_Phone,
-SUM(CASE WHEN Region_ID IS NULL THEN 1 ELSE 0 END )AS missing_Region_ID,
-SUM(CASE WHEN Signup_Date IS NULL THEN 1 ELSE 0 END )AS missing_Signup_Date,
-SUM(CASE WHEN Status IS NULL THEN 1 ELSE 0 END )AS missing_Status
-FROM customers1;
+SELECT @SQL = STRING_AGG(
+    'SUM(CASE WHEN [' + COLUMN_NAME + '] IS NULL THEN 1 ELSE 0 END) AS missing_' + COLUMN_NAME,
+    ', '
+)
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = @TableName
+  AND TABLE_SCHEMA = @SchemaName;
 
+SET @SQL = 'SELECT ' + @SQL + ' FROM [' + @SchemaName + '].[' + @TableName + ']';
+EXEC sp_executesql @SQL;
 
+--2.Finding duplicate records based on First_Name and Last_Name.
 WITH duplicate_cte AS (
 SELECT *,
 ROW_NUMBER () OVER (PARTITION BY First_Name,Last_Name ORDER BY  Customer_ID)AS row_num
