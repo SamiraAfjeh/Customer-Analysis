@@ -35,7 +35,14 @@ WHERE Email IS NOT NULL
         Email LIKE '%@%@%'
       );
 
+🎯 Stored Procedure Name: usp_Clean_Customers1_Data
+✅ Features:
 
+Report duplicate records based on First_Name + Last_Name
+
+Report invalid email addresses
+
+Report invalid phone numbers
 
 CREATE PROCEDURE usp_Clean_Customers1_Data
 AS
