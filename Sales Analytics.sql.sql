@@ -19,11 +19,14 @@ FROM region_customer_counts;
 -- 2.How many customers signed up per month?
 
 SELECT 
-DATE_FORMAT(Signup_Date,'%Y-%m')AS signup_month,
-COUNT(Customer_ID)AS total_signups
-FROM customers1
-GROUP BY  DATE_FORMAT(Signup_Date,'%Y-%m' )
-ORDER BY signup_month;
+    CONVERT(varchar(7), signupdate, 120) AS Month,  -- Format: YYYY-MM
+    COUNT(*) AS Signups
+FROM 
+    Customers1
+GROUP BY 
+    CONVERT(varchar(7), signupdate, 120)
+ORDER BY 
+    Month;
 
 -- 3.What percentage of customers are inactive or deleted?
 
