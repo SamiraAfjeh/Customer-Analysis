@@ -75,28 +75,55 @@ ORDER BY rt.Region_Name,rs.Status;
 
 -- 5.What is the monthly sales trend?
 
-SELECT DATE_FORMAT(o.Order_Date,'%Y-%m')AS MONTH,SUM(od.Quantity*od.Unit_Price)AS Revenue
-FROM orders O
-JOIN order_details od ON od.Order_ID=o.Order_ID
-GROUP BY MONTH ORDER BY MONTH ;
-
-
-WITH product_sales_cte AS  (
-   SELECT
-      DATE_FORMAT(o.Order_Date,'%Y-%m') AS Month ,
-      od.Product_ID,
-      SUM(od.Unit_Price*od.quantity)AS Revenue
-   FROM order_details od
-   JOIN orders o ON o.Order_ID=od.Order_ID
-   GROUP BY DATE_FORMAT(o.Order_Date,'%Y-%m'),od.Product_ID
+WITH SalesPerProduct AS (
+    SELECT
+        od.ProductID,
+        CAST(o.OrderDate AS DATE) AS OrderDate,
+        od.Quantity * od.UnitPrice AS LineAmount
+    FROM 
+        order_details od
+    JOIN 
+        orders o ON o.OrderID = od.OrderID
 )
-   SELECT 
-       ps.MONTH,
-       p.Product_Name,
-       ps.Revenue,
-       DENSE_RANK () OVER (ORDER BY ps.Revenue DESC ) AS rank_sales
-   FROM product_sales_cte AS  ps
-   JOIN products  p ON p.Product_ID=ps.Product_ID;
+SELECT 
+    p.Category,
+    FORMAT(S.OrderDate, 'yyyy-MM') AS OrderMonth,
+    ROUND(SUM(S.LineAmount), 2) AS TotalAmount
+FROM 
+    SalesPerProduct S
+JOIN 
+    products p ON p.ProductID = S.ProductID
+GROUP BY 
+    p.Category,
+    FORMAT(S.OrderDate, 'yyyy-MM')
+ORDER BY 
+    OrderMonth, p.Category;
+
+
+
+WITH SalesPerProduct AS (
+    SELECT
+        od.ProductID,
+        od.Quantity * od.UnitPrice AS LineAmount,
+        o.OrderDate
+    FROM 
+        order_details od
+    JOIN 
+        orders o ON o.OrderID = od.OrderID
+)
+SELECT 
+    FORMAT(s.OrderDate, 'yyyy-MM') AS [Month],
+    p.ProductName,
+    ROUND(SUM(s.LineAmount), 2) AS TotalAmount
+FROM 
+    SalesPerProduct s
+JOIN 
+    products p ON p.ProductID = s.ProductID
+GROUP BY 
+    FORMAT(s.OrderDate, 'yyyy-MM'),
+    p.ProductName
+ORDER BY 
+    [Month], p.ProductName;
 
 -- 6.How can we identify and rank the top-performing products by monthly revenue using window functions?
 
