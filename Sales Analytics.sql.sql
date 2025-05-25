@@ -344,3 +344,33 @@ WITH customer_cte AS (
  FROM customer_cte
  WHERE Signup_Date <=CURDATE() - INTERVAL 6 MONTH 
  ORDER BY Signup_Date ;
+
+--18 Which months had the highest and lowest sales?
+
+WITH monthly_sales AS (
+    SELECT 
+        FORMAT(CAST(OrderDate AS date), 'yyyy-MM') AS [Month],
+     TotalAmount
+    FROM 
+        orders 
+ 
+),
+ranked_months AS (
+    SELECT *,
+        RANK() OVER (ORDER BY TotalAmount DESC) AS rank_max,
+        RANK() OVER (ORDER BY TotalAmount ASC) AS rank_min
+    FROM monthly_sales
+)
+SELECT 
+    [Month], 
+    TotalAmount,
+    rank_max,
+    rank_min
+FROM 
+    ranked_months
+WHERE 
+    rank_max = 1 OR rank_min = 1
+ORDER BY 
+    TotalAmount DESC;
+
+
